@@ -212,13 +212,33 @@ NS_INLINE UIViewController *rootViewController(void) {
                frameUpdater:(FLTFrameUpdater *)frameUpdater
                 httpHeaders:(nonnull NSDictionary<NSString *, NSString *> *)headers
               playerFactory:(id<FVPPlayerFactory>)playerFactory {
-  NSDictionary<NSString *, id> *options = nil;
-  if ([headers count] != 0) {
-    options = @{@"AVURLAssetHTTPHeaderFieldsKey" : headers};
+  NSString *assetPath = [[NSUserDefaults standardUserDefaults] valueForKey:url.absoluteString];
+
+  if (assetPath == nil || ![assetPath isKindOfClass:[NSString class]]) {
+    NSDictionary<NSString *, id> *options = nil;
+    if ([headers count] != 0) {
+      options = @{@"AVURLAssetHTTPHeaderFieldsKey" : headers};
+    }
+    AVURLAsset *urlAsset = [AVURLAsset URLAssetWithURL:url options:options];
+    AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:urlAsset];
+    return [self initWithPlayerItem:item frameUpdater:frameUpdater playerFactory:playerFactory];
   }
-  AVURLAsset *urlAsset = [AVURLAsset URLAssetWithURL:url options:options];
-  AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:urlAsset];
-  return [self initWithPlayerItem:item frameUpdater:frameUpdater playerFactory:playerFactory];
+
+  NSURL *baseURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+  NSURL *assetURL = [baseURL URLByAppendingPathComponent:assetPath];
+  AVURLAsset *asset = [AVURLAsset assetWithURL:assetURL];
+  if (asset.assetCache && asset.assetCache.isPlayableOffline) {
+    AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:asset];
+    return [self initWithPlayerItem:item frameUpdater:frameUpdater playerFactory:playerFactory];
+  } else {
+    NSDictionary<NSString *, id> *options = nil;
+    if ([headers count] != 0) {
+      options = @{@"AVURLAssetHTTPHeaderFieldsKey" : headers};
+    }
+    AVURLAsset *urlAsset = [AVURLAsset URLAssetWithURL:url options:options];
+    AVPlayerItem *item = [AVPlayerItem playerItemWithAsset:urlAsset];
+    return [self initWithPlayerItem:item frameUpdater:frameUpdater playerFactory:playerFactory];
+  }
 }
 
 - (instancetype)initWithPlayerItem:(AVPlayerItem *)item
@@ -542,6 +562,13 @@ NS_INLINE UIViewController *rootViewController(void) {
     NSMutableDictionary<NSNumber *, FLTVideoPlayer *> *playersByTextureId;
 @property(readonly, strong, nonatomic) NSObject<FlutterPluginRegistrar> *registrar;
 @property(nonatomic, strong) id<FVPPlayerFactory> playerFactory;
+
+@property(nonatomic, strong) NSURLSessionConfiguration *downloadSessionConfig;
+@property(nonatomic, strong) AVAssetDownloadURLSession *downloadSession;
+
+@property(nonatomic) FlutterEventChannel *downloadEventChannel;
+@property(nonatomic) FlutterEventSink downloadEventSink;
+
 @end
 
 @implementation FLTVideoPlayerPlugin
@@ -564,12 +591,21 @@ NS_INLINE UIViewController *rootViewController(void) {
   _registrar = registrar;
   _playerFactory = playerFactory;
   _playersByTextureId = [NSMutableDictionary dictionaryWithCapacity:1];
+
+  _downloadSessionConfig = [NSURLSessionConfiguration
+      backgroundSessionConfigurationWithIdentifier:@"VideoPlayerDownloader"];
+  _downloadSession =
+      [AVAssetDownloadURLSession sessionWithConfiguration:_downloadSessionConfig
+                                    assetDownloadDelegate:self
+                                            delegateQueue:[NSOperationQueue mainQueue]];
+
   return self;
 }
 
 - (void)detachFromEngineForRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
   [self.playersByTextureId.allValues makeObjectsPerformSelector:@selector(disposeSansEventChannel)];
   [self.playersByTextureId removeAllObjects];
+  [self.downloadSession finishTasksAndInvalidate];
   // TODO(57151): This should be commented out when 57151's fix lands on stable.
   // This is the correct behavior we never did it in the past and the engine
   // doesn't currently support it.
@@ -589,6 +625,25 @@ NS_INLINE UIViewController *rootViewController(void) {
   self.playersByTextureId[@(textureId)] = player;
   FLTTextureMessage *result = [FLTTextureMessage makeWithTextureId:@(textureId)];
   return result;
+}
+
+- (void)initializeDownloadEvents:(FlutterError *__autoreleasing *)error {
+  FlutterEventChannel *eventChannel = [FlutterEventChannel
+      eventChannelWithName:[NSString stringWithFormat:@"flutter.io/videoPlayer/downloadEvents"]
+           binaryMessenger:_messenger];
+  [eventChannel setStreamHandler:self];
+  _downloadEventChannel = eventChannel;
+}
+
+- (FlutterError *_Nullable)onCancelWithArguments:(id _Nullable)arguments {
+  _downloadEventSink = nil;
+  return nil;
+}
+
+- (FlutterError *_Nullable)onListenWithArguments:(id _Nullable)arguments
+                                       eventSink:(nonnull FlutterEventSink)events {
+  _downloadEventSink = events;
+  return nil;
 }
 
 - (void)initialize:(FlutterError *__autoreleasing *)error {
@@ -708,6 +763,250 @@ NS_INLINE UIViewController *rootViewController(void) {
                                            error:nil];
   } else {
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+  }
+}
+
+- (void)startDownload:(FLTDownloadUrlMessage *)input
+                error:(FlutterError *_Nullable __autoreleasing *)error {
+  if (input.url) {
+    NSString *url = input.url;
+    [self setupAssetAction:url withAction:1];
+  }
+}
+
+- (void)stopDownload:(FLTDownloadUrlMessage *)input
+               error:(FlutterError *_Nullable __autoreleasing *)error {
+  if (input.url) {
+    NSString *url = input.url;
+    [self setupAssetAction:url withAction:2];
+  }
+}
+
+- (void)removeDownload:(FLTDownloadUrlMessage *)input
+                 error:(FlutterError *_Nullable __autoreleasing *)error {
+  if (input.url) {
+    NSString *url = input.url;
+    [self setupAssetAction:url withAction:3];
+  }
+}
+
+- (void)getDownload:(FLTDownloadUrlMessage *)input
+         completion:(void (^)(FLTDownloadMessage *_Nullable, FlutterError *_Nullable))completion {
+  NSString *assetPath = [[NSUserDefaults standardUserDefaults] valueForKey:input.url];
+
+  if (assetPath != nil || [assetPath isKindOfClass:[NSString class]]) {
+    NSURL *baseURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+    NSURL *assetURL = [baseURL URLByAppendingPathComponent:assetPath];
+    AVURLAsset *asset = [AVURLAsset assetWithURL:assetURL];
+    if (asset.assetCache && asset.assetCache.isPlayableOffline) {
+      FLTDownloadMessage *downloadMsg = [FLTDownloadMessage makeWithUrl:input.url
+                                                                  state:@3
+                                                      percentDownloaded:@100.0
+                                                        bytesDownloaded:@0];
+      completion(downloadMsg, nil);
+      return;
+    }
+  }
+
+  // Grab all the pending tasks associated with the downloadSession
+  [self.downloadSession
+      getAllTasksWithCompletionHandler:^(NSArray<__kindof NSURLSessionTask *> *tasksArray) {
+        FLTDownloadMessage *downloadMsg = [FLTDownloadMessage makeWithUrl:nil
+                                                                    state:@0
+                                                        percentDownloaded:@0.0
+                                                          bytesDownloaded:@0];
+        // For each task, restore the state in the app
+        for (NSURLSessionTask *task in tasksArray) {
+          if ([task isKindOfClass:[AVAssetDownloadTask class]]) {
+            AVAssetDownloadTask *downloadTask = (AVAssetDownloadTask *)task;
+            // Restore asset, progress indicators, state, etc...
+            AVURLAsset *asset = downloadTask.URLAsset;
+            // Continue with your restoration logic here
+            NSURL *url = [asset URL];
+            if ([url.absoluteString isEqualToString:input.url]) {
+              downloadMsg.state = [self translateDownloadState:downloadTask.state];
+              downloadMsg.bytesDownloaded = @(downloadTask.countOfBytesReceived);
+              double percentComplete =
+                  (downloadTask.countOfBytesReceived / downloadTask.countOfBytesExpectedToReceive) *
+                  100;
+              downloadMsg.percentDownloaded = @(percentComplete);
+              downloadMsg.url = input.url;
+            }
+          }
+        }
+        completion(downloadMsg, nil);
+      }];
+}
+
+- (NSNumber *)translateDownloadState:(NSURLSessionTaskState)state {
+  switch (state) {
+    case NSURLSessionTaskStateSuspended:
+      return @1;
+    case NSURLSessionTaskStateRunning:
+      return @2;
+    case NSURLSessionTaskStateCompleted:
+      return @3;
+    default:
+      return @0;
+  }
+
+  return @0;
+}
+
+- (void)deleteOfflineAsset:(NSString *)urlString {
+  @try {
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSString *assetPath = [userDefaults stringForKey:urlString];
+
+    if (assetPath) {
+      NSString *homeDirectory = NSHomeDirectory();
+      NSURL *baseURL = [NSURL fileURLWithPath:homeDirectory];
+      NSURL *assetURL = [baseURL URLByAppendingPathComponent:assetPath];
+
+      NSFileManager *fileManager = [NSFileManager defaultManager];
+      NSError *error;
+      [fileManager removeItemAtURL:assetURL error:&error];
+
+      if (!error) {
+        [userDefaults removeObjectForKey:urlString];
+        [userDefaults synchronize];
+      } else {
+        NSLog(@"An error occurred deleting offline asset: %@", error);
+      }
+    }
+  } @catch (NSException *exception) {
+    NSLog(@"An exception occurred deleting offline asset: %@", [exception reason]);
+  }
+}
+
+- (void)setupAssetAction:(NSString *)urlString withAction:(int)action {
+  NSString *assetPath = [[NSUserDefaults standardUserDefaults] valueForKey:urlString];
+
+  if (assetPath == nil || ![assetPath isKindOfClass:[NSString class]]) {
+    [self startActionInternal:urlString withAction:action];
+  } else {
+    NSURL *baseURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+    NSURL *assetURL = [baseURL URLByAppendingPathComponent:assetPath];
+    AVURLAsset *asset = [AVURLAsset assetWithURL:assetURL];
+    if (asset.assetCache && asset.assetCache.isPlayableOffline) {
+      if (action == 3) {
+        // delete offline asset
+        [self deleteOfflineAsset:urlString];
+      }
+    } else {
+      // We have an assetPath reference but no playable asset
+      // this happens when a user deletes a downloaded video via
+      // the system settings
+
+      // Remove our saved storage reference
+      NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+      [userDefaults removeObjectForKey:urlString];
+      [userDefaults synchronize];
+
+      [self startActionInternal:urlString withAction:action];
+    }
+  }
+}
+
+- (void)startActionInternal:(NSString *)urlString withAction:(int)action {
+  NSURL *url = [NSURL URLWithString:urlString];
+  AVURLAsset *asset = [AVURLAsset assetWithURL:url];
+
+  [self.downloadSession
+      getAllTasksWithCompletionHandler:^(NSArray<__kindof NSURLSessionTask *> *tasksArray) {
+        AVAssetDownloadTask *myDownloadTask = nil;
+        for (NSURLSessionTask *task in tasksArray) {
+          if ([task isKindOfClass:[AVAssetDownloadTask class]]) {
+            AVAssetDownloadTask *downloadTask = (AVAssetDownloadTask *)task;
+            AVURLAsset *asset = downloadTask.URLAsset;
+            NSURL *url = [asset URL];
+            if ([url.absoluteString isEqualToString:urlString]) {
+              myDownloadTask = downloadTask;
+            }
+          }
+        }
+
+        if (action == 1) {
+          if (!myDownloadTask)
+            myDownloadTask = [self.downloadSession assetDownloadTaskWithURLAsset:asset
+                                                                      assetTitle:urlString
+                                                                assetArtworkData:nil
+                                                                         options:nil];
+        }
+
+        if (!myDownloadTask) return;
+
+        if (action == 1) {
+          [myDownloadTask resume];
+        } else if (action == 2) {
+          [myDownloadTask suspend];
+        } else if (action == 3) {
+          [myDownloadTask cancel];
+        }
+      }];
+}
+
+- (void)URLSession:(NSURLSession *)session
+          assetDownloadTask:(AVAssetDownloadTask *)assetDownloadTask
+           didLoadTimeRange:(CMTimeRange)timeRange
+      totalTimeRangesLoaded:(NSArray<NSValue *> *)loadedTimeRanges
+    timeRangeExpectedToLoad:(CMTimeRange)timeRangeExpectedToLoad {
+  double percentComplete = 0.0;
+
+  // Iterate through the loaded time ranges
+  for (NSValue *value in loadedTimeRanges) {
+    // Unwrap the CMTimeRange from the NSValue
+    CMTimeRange loadedTimeRange = [value CMTimeRangeValue];
+    // Calculate the percentage of the total expected asset duration
+    percentComplete += CMTimeGetSeconds(loadedTimeRange.duration) /
+                       CMTimeGetSeconds(timeRangeExpectedToLoad.duration);
+  }
+  percentComplete *= 100;
+
+  if ([assetDownloadTask.URLAsset URL].absoluteString != nil) {
+    NSString *_Nonnull url = [assetDownloadTask.URLAsset URL].absoluteString;
+    _downloadEventSink(@{
+      @"event" : @"progress",
+      @"percent" : @(percentComplete),
+      @"url" : url,
+      @"state" : [self translateDownloadState:assetDownloadTask.state]
+    });
+  }
+}
+
+- (void)URLSession:(NSURLSession *)session
+            assetDownloadTask:(AVAssetDownloadTask *)assetDownloadTask
+    didFinishDownloadingToURL:(NSURL *)location {
+  // Do not move the asset from the download location
+  // If nsurl is nil we check if there is an error object where we can obtain
+  // the original URL from so we can check where the partial data has been stored
+  NSURL *nsurl = [(AVURLAsset *)assetDownloadTask.URLAsset URL];
+  NSString *urlString = nsurl != nil
+                            ? nsurl.absoluteString
+                            : assetDownloadTask.error != nil
+                                  ? assetDownloadTask.error.userInfo[@"NSErrorFailingURLStringKey"]
+                                  : nil;
+  [[NSUserDefaults standardUserDefaults] setObject:location.relativePath forKey:urlString];
+}
+
+- (void)URLSession:(NSURLSession *)session
+           assetDownloadTask:(AVAssetDownloadTask *)assetDownloadTask
+    didResolveMediaSelection:(AVMediaSelection *)resolvedMediaSelection {
+}
+
+- (void)URLSession:(NSURLSession *)session
+                    task:(NSURLSessionTask *)task
+    didCompleteWithError:(NSError *)error {
+  NSLog(@"error: %@", error);
+  if (task.state == NSURLSessionTaskStateCompleted && error != nil) {
+    if ([task isKindOfClass:[AVAssetDownloadTask class]]) {
+      AVAssetDownloadTask *downloadTask = (AVAssetDownloadTask *)task;
+      NSURL *nsurl = [(AVURLAsset *)downloadTask.URLAsset URL];
+      NSString *urlString =
+          nsurl != nil ? nsurl.absoluteString : error.userInfo[@"NSErrorFailingURLStringKey"];
+      // Remove any partial downloaded data
+      [self deleteOfflineAsset:urlString];
+    }
   }
 }
 
