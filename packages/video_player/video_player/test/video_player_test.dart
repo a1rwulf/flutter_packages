@@ -83,6 +83,26 @@ class FakeController extends ValueNotifier<VideoPlayerValue>
   Future<void> setClosedCaptionFile(
     Future<ClosedCaptionFile>? closedCaptionFile,
   ) async {}
+
+  @override
+  Future<Download?> getDownload(String url) {
+    return Future<Download?>.value();
+  }
+
+  @override
+  Future<void> removeDownload(String url) async {}
+
+  @override
+  Future<void> startDownload(String url) async {}
+
+  @override
+  Future<void> stopDownload(String url) async {}
+
+  @override
+  Future<void> initDownloadEvents(Function func) {
+    // TODO(a1rwulf): implement initDownloadEvents
+    throw UnimplementedError();
+  }
 }
 
 Future<ClosedCaptionFile> _loadClosedCaption() async =>
