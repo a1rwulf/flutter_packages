@@ -107,6 +107,40 @@ abstract class VideoPlayerPlatform extends PlatformInterface {
   Future<void> setWebOptions(int textureId, VideoPlayerWebOptions options) {
     throw UnimplementedError('setWebOptions() has not been implemented.');
   }
+
+  /// Starts downloading of the video from the specified url.
+  /// The URL is also used as the identifier for the download.
+  Future<void> startDownload(String url) {
+    throw UnimplementedError('startDownload() has not been implemented.');
+  }
+
+  /// Suspends downloading of the video specified by the url.
+  Future<void> stopDownload(String url) {
+    throw UnimplementedError('stopDownload() has not been implemented.');
+  }
+
+  /// Stops downloading of the video from the specified url removing
+  /// all downloaded bits from the system. If no download is running
+  /// the offline content will still be removed.
+  Future<void> removeDownload(String url) {
+    throw UnimplementedError('removeDownload() has not been implemented.');
+  }
+
+  /// Get all details about a download or null if the download does not exist.
+  Future<Download?> getDownload(String url) {
+    throw UnimplementedError('getDownload() has not been implemented.');
+  }
+
+  /// Returns a Stream of [Download]s.
+  Stream<Download> downloadEvents() {
+    throw UnimplementedError('downloadEvents() has not been implemented.');
+  }
+
+  /// Initializes the event channel in order to get progress notifications
+  /// for downloads.
+  Future<void> initDownloadEvents() {
+    throw UnimplementedError('initDownloadEvents() has not been implemented.');
+  }
 }
 
 class _PlaceholderImplementation extends VideoPlayerPlatform {}
@@ -473,4 +507,32 @@ class VideoPlayerWebOptionsControls {
 
     return controlsList.join(' ');
   }
+}
+
+/// [Download] describes a video download
+@immutable
+class Download {
+  /// [Download] describes a video download
+  const Download({
+    required this.url,
+    required this.state,
+    required this.percentDownloaded,
+    required this.bytesDownloaded,
+  });
+
+  /// The url of the video
+  final String url;
+
+  /// The state of the download
+  final int state;
+
+  /// The estimated download percentage
+  final double percentDownloaded;
+
+  /// The total number of downloaded bytes
+  final int bytesDownloaded;
+
+  @override
+  String toString() =>
+      '${objectRuntimeType(this, 'Download')}(url: $url, state: $state, percent: $percentDownloaded, bytes: $bytesDownloaded)';
 }
