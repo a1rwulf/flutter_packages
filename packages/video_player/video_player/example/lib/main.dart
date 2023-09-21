@@ -7,7 +7,11 @@
 /// An example of using the plugin, controlling lifecycle and playback of the
 /// video.
 
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
 void main() {
@@ -22,7 +26,7 @@ class _App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         key: const ValueKey<String>('home_page'),
         appBar: AppBar(
@@ -50,6 +54,7 @@ class _App extends StatelessWidget {
               ),
               Tab(icon: Icon(Icons.insert_drive_file), text: 'Asset'),
               Tab(icon: Icon(Icons.list), text: 'List example'),
+              Tab(icon: Icon(Icons.list), text: 'Download example')
             ],
           ),
         ),
@@ -58,10 +63,213 @@ class _App extends StatelessWidget {
             _BumbleBeeRemoteVideo(),
             _ButterFlyAssetVideo(),
             _ButterFlyAssetVideoInList(),
+            _DownloadVideoListWrapper(),
           ],
         ),
       ),
     );
+  }
+}
+
+class DownloadProgress extends ChangeNotifier {
+  DownloadProgress(this.url);
+
+  Map<String, double> progressMap = <String, double>{};
+  double progress = 0.0;
+  String url = '';
+
+  void updateProgress(String url, double progress) {
+    progressMap[url] = progress;
+    notifyListeners();
+  }
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+  }
+}
+
+class _DownloadVideoListWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<DownloadProgress>(
+      create: (BuildContext context) => DownloadProgress('asdf'),
+      child: _DownloadVideosList(),
+    );
+  }
+}
+
+class _DownloadVideosList extends StatefulWidget {
+  @override
+  State<_DownloadVideosList> createState() => _DownloadVideosListState();
+}
+
+class _DownloadVideosListState extends State<_DownloadVideosList> {
+  late VideoPlayerController downloadsController;
+  @override
+  void initState() {
+    downloadsController = VideoPlayerController.networkUrl(Uri.parse(
+        'https://vs-dev.sisers.seadev-studios.com/ES3KawVfFTvPSoaOrbe3m/stream.m3u8'));
+
+    WidgetsBinding.instance.addPostFrameCallback((Duration timeStamp) {
+      final DownloadProgress t =
+          Provider.of<DownloadProgress>(context, listen: false);
+      downloadsController.initDownloadEvents((Download download) {
+        t.updateProgress(download.url, download.percentDownloaded);
+        log('Downloaded ${download.url}: ${download.percentDownloaded}%');
+      });
+    });
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: <Widget>[
+        _ExampleDownloadCard(
+          title: 'Stretching 1 (3m)',
+          url:
+              'https://vs-dev.sisers.seadev-studios.com/ES3KawVfFTvPSoaOrbe3m/stream.m3u8',
+        ),
+        _ExampleDownloadCard(
+          title: 'Hohoho (69m)',
+          url:
+              'https://vs-dev.sisers.seadev-studios.com/E87Un5n9SUT-kr6o8xJ3h/stream.m3u8',
+        ),
+        _ExampleDownloadCard(
+          title: 'Stretching 2 (11m)',
+          url:
+              'https://vs-dev.sisers.seadev-studios.com/FN1hLbya-T9WTTt0G75IR/stream.m3u8',
+        ),
+        _ExampleDownloadCard(
+          title: 'Stretching 3 (13m)',
+          url:
+              'https://vs-dev.sisers.seadev-studios.com/fF2iglaS0O4gopE4A6mhO/stream.m3u8',
+        ),
+        _ExampleDownloadCard(
+          title: 'Long name (7m)',
+          url:
+              'https://vs-dev.sisers.seadev-studios.com/SDH6ULGVI7zZxqz5rsr-Q/stream.m3u8',
+        ),
+      ],
+    );
+  }
+}
+
+/// A filler card to show the video in a list of scrolling contents.
+class _ExampleDownloadCard extends StatefulWidget {
+  _ExampleDownloadCard({required this.title, required this.url});
+
+  final String title;
+  final String url;
+  late VideoPlayerController _controller;
+
+  @override
+  State<_ExampleDownloadCard> createState() => _ExampleDownloadCardState();
+}
+
+class _ExampleDownloadCardState extends State<_ExampleDownloadCard> {
+  @override
+  void initState() {
+    widget._controller =
+        VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            leading: const Icon(Icons.download_for_offline),
+            title: Text(widget.title),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              ButtonBar(children: <Widget>[
+                TextButton(
+                  child: const Text('Start'),
+                  onPressed: () {
+                    widget._controller.startDownload(widget.url);
+                  },
+                ),
+                TextButton(
+                  child: const Text('Pause'),
+                  onPressed: () {
+                    widget._controller.stopDownload(widget.url);
+                  },
+                ),
+                TextButton(
+                  child: const Text('Remove'),
+                  onPressed: () {
+                    widget._controller.removeDownload(widget.url);
+                    Provider.of<DownloadProgress>(context, listen: false)
+                        .updateProgress(widget.url, 0.0);
+                  },
+                ),
+              ]),
+              _DownloadProgress(widget.url),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class _DownloadProgress extends StatefulWidget {
+  const _DownloadProgress(this.url);
+  final String url;
+
+  @override
+  _DownloadProgressState createState() => _DownloadProgressState();
+}
+
+class _DownloadProgressState extends State<_DownloadProgress> {
+  double progress = 0.0;
+  double dlprogress = 0.0;
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((Duration timeStamp) {
+      final DownloadProgress t =
+          Provider.of<DownloadProgress>(context, listen: false);
+      t.addListener(() {
+        if (t.progressMap.containsKey(widget.url)) {
+          setState(() {
+            progress = t.progressMap[widget.url]! / 100;
+          });
+        }
+      });
+    });
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (progress < 1.0) {
+      return SizedBox(
+          height: 20,
+          width: 20,
+          child:
+              CircularProgressIndicator(color: Colors.blue, value: progress));
+    } else {
+      return const Text('Finished');
+    }
   }
 }
 
@@ -219,7 +427,7 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     super.initState();
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(
-          'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'),
+          'https://vs-dev.sisers.seadev-studios.com/dksUDCxcUP0aIxqA7nLMD/stream.m3u8'),
       closedCaptionFile: _loadCaptions(),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
@@ -227,6 +435,7 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     _controller.addListener(() {
       setState(() {});
     });
+
     _controller.setLooping(true);
     _controller.initialize();
   }
