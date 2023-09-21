@@ -14,7 +14,12 @@ import 'package:video_player_platform_interface/video_player_platform_interface.
 import 'src/closed_caption_file.dart';
 
 export 'package:video_player_platform_interface/video_player_platform_interface.dart'
-    show DurationRange, DataSourceType, VideoFormat, VideoPlayerOptions;
+    show
+        DurationRange,
+        DataSourceType,
+        VideoFormat,
+        VideoPlayerOptions,
+        Download;
 
 export 'src/closed_caption_file.dart';
 
@@ -366,6 +371,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   StreamSubscription<dynamic>? _eventSubscription;
   _VideoAppLifeCycleObserver? _lifeCycleObserver;
 
+  StreamSubscription<dynamic>? _downloadEventSubscription;
+
   /// The id of a texture that hasn't been initialized.
   @visibleForTesting
   static const int kUninitializedTextureId = -1;
@@ -375,6 +382,33 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// on the plugin.
   @visibleForTesting
   int get textureId => _textureId;
+
+  /// Attempts to setup the downloads event stream
+  Future<void> initDownloadEvents(Function(Download) func) async {
+    final Completer<void> initializingCompleter = Completer<void>();
+    void eventListener(Download event) {
+      if (_isDisposed) {
+        return;
+      }
+
+      func(event);
+    }
+
+    void errorListener(Object obj) {
+      // final PlatformException e = obj as PlatformException;
+      // TODO(a1rwulf): expose error to subscriber
+      if (!initializingCompleter.isCompleted) {
+        initializingCompleter.completeError(obj);
+      }
+    }
+
+    await _videoPlayerPlatform.initDownloadEvents();
+    _downloadEventSubscription = _videoPlayerPlatform
+        .downloadEvents()
+        .listen(eventListener, onError: errorListener);
+    initializingCompleter.complete(null);
+    return initializingCompleter.future;
+  }
 
   /// Attempts to open the given [dataSource] and load metadata about the video.
   Future<void> initialize() async {
@@ -504,10 +538,34 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         await _eventSubscription?.cancel();
         await _videoPlayerPlatform.dispose(_textureId);
       }
+      await _downloadEventSubscription?.cancel();
       _lifeCycleObserver?.dispose();
     }
     _isDisposed = true;
     super.dispose();
+  }
+
+  /// Starts downloading a video.
+  Future<void> startDownload(String url) async {
+    await _videoPlayerPlatform.startDownload(url);
+  }
+
+  /// Stops downloading a video.
+  Future<void> stopDownload(String url) async {
+    await _videoPlayerPlatform.stopDownload(url);
+  }
+
+  /// Stops downloading a video and removes the bits
+  /// that already have been downloaded.
+  /// If no download is running it will still remove
+  /// all downloaded parts.
+  Future<void> removeDownload(String url) async {
+    await _videoPlayerPlatform.removeDownload(url);
+  }
+
+  /// Get the download associated with the url.
+  Future<Download?> getDownload(String url) async {
+    return _videoPlayerPlatform.getDownload(url);
   }
 
   /// Starts playing the video.
