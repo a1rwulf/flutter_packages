@@ -1,6 +1,7 @@
-## NEXT
+## 2.5.0
 
 * Updates minimum supported SDK version to Flutter 3.7/Dart 2.19.
+* Adds support for video downloads and offline playback.
 
 ## 2.4.9
 
