@@ -57,6 +57,19 @@ class MixWithOthersMessage {
   bool mixWithOthers;
 }
 
+class DownloadUrlMessage {
+  DownloadUrlMessage(this.url);
+  String? url;
+}
+
+class DownloadMessage {
+  DownloadMessage(this.url, this.state, this.percentDownloaded, this.bytesDownloaded);
+  final String? url;
+  final int? state;
+  final double? percentDownloaded;
+  final int? bytesDownloaded;
+}
+
 @HostApi(dartHostTestHandler: 'TestHostVideoPlayerApi')
 abstract class AVFoundationVideoPlayerApi {
   @ObjCSelector('initialize')
@@ -82,4 +95,15 @@ abstract class AVFoundationVideoPlayerApi {
   void pause(TextureMessage msg);
   @ObjCSelector('setMixWithOthers:')
   void setMixWithOthers(MixWithOthersMessage msg);
+  @ObjCSelector('startDownload:')
+  void startDownload(DownloadUrlMessage msg);
+  @ObjCSelector('stopDownload:')
+  void stopDownload(DownloadUrlMessage msg);
+  @ObjCSelector('removeDownload:')
+  void removeDownload(DownloadUrlMessage msg);
+  @async
+  @ObjCSelector('getDownload:')
+  DownloadMessage getDownload(DownloadUrlMessage url);
+  @ObjCSelector('initializeDownloadEvents')
+  void initializeDownloadEvents();
 }
