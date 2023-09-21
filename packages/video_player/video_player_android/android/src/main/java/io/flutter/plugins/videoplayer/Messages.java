@@ -16,6 +16,10 @@ import io.flutter.plugin.common.StandardMessageCodec;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Generated class from Pigeon. */
@@ -31,7 +35,8 @@ public class Messages {
     /** The error details. Must be a datatype supported by the api codec. */
     public final Object details;
 
-    public FlutterError(@NonNull String code, @Nullable String message, @Nullable Object details) {
+    public FlutterError(@NonNull String code, @Nullable String message, @Nullable Object details) 
+    {
       super(message);
       this.code = code;
       this.details = details;
@@ -50,7 +55,7 @@ public class Messages {
       errorList.add(exception.toString());
       errorList.add(exception.getClass().getSimpleName());
       errorList.add(
-          "Cause: " + exception.getCause() + ", Stacktrace: " + Log.getStackTraceString(exception));
+        "Cause: " + exception.getCause() + ", Stacktrace: " + Log.getStackTraceString(exception));
     }
     return errorList;
   }
@@ -99,10 +104,7 @@ public class Messages {
     static @NonNull TextureMessage fromList(@NonNull ArrayList<Object> list) {
       TextureMessage pigeonResult = new TextureMessage();
       Object textureId = list.get(0);
-      pigeonResult.setTextureId(
-          (textureId == null)
-              ? null
-              : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
+      pigeonResult.setTextureId((textureId == null) ? null : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
       return pigeonResult;
     }
   }
@@ -173,10 +175,7 @@ public class Messages {
     static @NonNull LoopingMessage fromList(@NonNull ArrayList<Object> list) {
       LoopingMessage pigeonResult = new LoopingMessage();
       Object textureId = list.get(0);
-      pigeonResult.setTextureId(
-          (textureId == null)
-              ? null
-              : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
+      pigeonResult.setTextureId((textureId == null) ? null : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
       Object isLooping = list.get(1);
       pigeonResult.setIsLooping((Boolean) isLooping);
       return pigeonResult;
@@ -249,10 +248,7 @@ public class Messages {
     static @NonNull VolumeMessage fromList(@NonNull ArrayList<Object> list) {
       VolumeMessage pigeonResult = new VolumeMessage();
       Object textureId = list.get(0);
-      pigeonResult.setTextureId(
-          (textureId == null)
-              ? null
-              : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
+      pigeonResult.setTextureId((textureId == null) ? null : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
       Object volume = list.get(1);
       pigeonResult.setVolume((Double) volume);
       return pigeonResult;
@@ -325,10 +321,7 @@ public class Messages {
     static @NonNull PlaybackSpeedMessage fromList(@NonNull ArrayList<Object> list) {
       PlaybackSpeedMessage pigeonResult = new PlaybackSpeedMessage();
       Object textureId = list.get(0);
-      pigeonResult.setTextureId(
-          (textureId == null)
-              ? null
-              : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
+      pigeonResult.setTextureId((textureId == null) ? null : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
       Object speed = list.get(1);
       pigeonResult.setSpeed((Double) speed);
       return pigeonResult;
@@ -401,15 +394,9 @@ public class Messages {
     static @NonNull PositionMessage fromList(@NonNull ArrayList<Object> list) {
       PositionMessage pigeonResult = new PositionMessage();
       Object textureId = list.get(0);
-      pigeonResult.setTextureId(
-          (textureId == null)
-              ? null
-              : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
+      pigeonResult.setTextureId((textureId == null) ? null : ((textureId instanceof Integer) ? (Integer) textureId : (Long) textureId));
       Object position = list.get(1);
-      pigeonResult.setPosition(
-          (position == null)
-              ? null
-              : ((position instanceof Integer) ? (Integer) position : (Long) position));
+      pigeonResult.setPosition((position == null) ? null : ((position instanceof Integer) ? (Integer) position : (Long) position));
       return pigeonResult;
     }
   }
@@ -596,6 +583,155 @@ public class Messages {
     }
   }
 
+  /** Generated class from Pigeon that represents data sent in messages. */
+  public static final class DownloadUrlMessage {
+    private @Nullable String url;
+
+    public @Nullable String getUrl() {
+      return url;
+    }
+
+    public void setUrl(@Nullable String setterArg) {
+      this.url = setterArg;
+    }
+
+    public static final class Builder {
+
+      private @Nullable String url;
+
+      public @NonNull Builder setUrl(@Nullable String setterArg) {
+        this.url = setterArg;
+        return this;
+      }
+
+      public @NonNull DownloadUrlMessage build() {
+        DownloadUrlMessage pigeonReturn = new DownloadUrlMessage();
+        pigeonReturn.setUrl(url);
+        return pigeonReturn;
+      }
+    }
+
+    @NonNull
+    ArrayList<Object> toList() {
+      ArrayList<Object> toListResult = new ArrayList<Object>(1);
+      toListResult.add(url);
+      return toListResult;
+    }
+
+    static @NonNull DownloadUrlMessage fromList(@NonNull ArrayList<Object> list) {
+      DownloadUrlMessage pigeonResult = new DownloadUrlMessage();
+      Object url = list.get(0);
+      pigeonResult.setUrl((String) url);
+      return pigeonResult;
+    }
+  }
+
+  /** Generated class from Pigeon that represents data sent in messages. */
+  public static final class DownloadMessage {
+    private @Nullable String url;
+
+    public @Nullable String getUrl() {
+      return url;
+    }
+
+    public void setUrl(@Nullable String setterArg) {
+      this.url = setterArg;
+    }
+
+    private @Nullable Long state;
+
+    public @Nullable Long getState() {
+      return state;
+    }
+
+    public void setState(@Nullable Long setterArg) {
+      this.state = setterArg;
+    }
+
+    private @Nullable Double percentDownloaded;
+
+    public @Nullable Double getPercentDownloaded() {
+      return percentDownloaded;
+    }
+
+    public void setPercentDownloaded(@Nullable Double setterArg) {
+      this.percentDownloaded = setterArg;
+    }
+
+    private @Nullable Long bytesDownloaded;
+
+    public @Nullable Long getBytesDownloaded() {
+      return bytesDownloaded;
+    }
+
+    public void setBytesDownloaded(@Nullable Long setterArg) {
+      this.bytesDownloaded = setterArg;
+    }
+
+    public static final class Builder {
+
+      private @Nullable String url;
+
+      public @NonNull Builder setUrl(@Nullable String setterArg) {
+        this.url = setterArg;
+        return this;
+      }
+
+      private @Nullable Long state;
+
+      public @NonNull Builder setState(@Nullable Long setterArg) {
+        this.state = setterArg;
+        return this;
+      }
+
+      private @Nullable Double percentDownloaded;
+
+      public @NonNull Builder setPercentDownloaded(@Nullable Double setterArg) {
+        this.percentDownloaded = setterArg;
+        return this;
+      }
+
+      private @Nullable Long bytesDownloaded;
+
+      public @NonNull Builder setBytesDownloaded(@Nullable Long setterArg) {
+        this.bytesDownloaded = setterArg;
+        return this;
+      }
+
+      public @NonNull DownloadMessage build() {
+        DownloadMessage pigeonReturn = new DownloadMessage();
+        pigeonReturn.setUrl(url);
+        pigeonReturn.setState(state);
+        pigeonReturn.setPercentDownloaded(percentDownloaded);
+        pigeonReturn.setBytesDownloaded(bytesDownloaded);
+        return pigeonReturn;
+      }
+    }
+
+    @NonNull
+    ArrayList<Object> toList() {
+      ArrayList<Object> toListResult = new ArrayList<Object>(4);
+      toListResult.add(url);
+      toListResult.add(state);
+      toListResult.add(percentDownloaded);
+      toListResult.add(bytesDownloaded);
+      return toListResult;
+    }
+
+    static @NonNull DownloadMessage fromList(@NonNull ArrayList<Object> list) {
+      DownloadMessage pigeonResult = new DownloadMessage();
+      Object url = list.get(0);
+      pigeonResult.setUrl((String) url);
+      Object state = list.get(1);
+      pigeonResult.setState((state == null) ? null : ((state instanceof Integer) ? (Integer) state : (Long) state));
+      Object percentDownloaded = list.get(2);
+      pigeonResult.setPercentDownloaded((Double) percentDownloaded);
+      Object bytesDownloaded = list.get(3);
+      pigeonResult.setBytesDownloaded((bytesDownloaded == null) ? null : ((bytesDownloaded instanceof Integer) ? (Integer) bytesDownloaded : (Long) bytesDownloaded));
+      return pigeonResult;
+    }
+  }
+
   private static class AndroidVideoPlayerApiCodec extends StandardMessageCodec {
     public static final AndroidVideoPlayerApiCodec INSTANCE = new AndroidVideoPlayerApiCodec();
 
@@ -607,16 +743,20 @@ public class Messages {
         case (byte) 128:
           return CreateMessage.fromList((ArrayList<Object>) readValue(buffer));
         case (byte) 129:
-          return LoopingMessage.fromList((ArrayList<Object>) readValue(buffer));
+          return DownloadMessage.fromList((ArrayList<Object>) readValue(buffer));
         case (byte) 130:
-          return MixWithOthersMessage.fromList((ArrayList<Object>) readValue(buffer));
+          return DownloadUrlMessage.fromList((ArrayList<Object>) readValue(buffer));
         case (byte) 131:
-          return PlaybackSpeedMessage.fromList((ArrayList<Object>) readValue(buffer));
+          return LoopingMessage.fromList((ArrayList<Object>) readValue(buffer));
         case (byte) 132:
-          return PositionMessage.fromList((ArrayList<Object>) readValue(buffer));
+          return MixWithOthersMessage.fromList((ArrayList<Object>) readValue(buffer));
         case (byte) 133:
-          return TextureMessage.fromList((ArrayList<Object>) readValue(buffer));
+          return PlaybackSpeedMessage.fromList((ArrayList<Object>) readValue(buffer));
         case (byte) 134:
+          return PositionMessage.fromList((ArrayList<Object>) readValue(buffer));
+        case (byte) 135:
+          return TextureMessage.fromList((ArrayList<Object>) readValue(buffer));
+        case (byte) 136:
           return VolumeMessage.fromList((ArrayList<Object>) readValue(buffer));
         default:
           return super.readValueOfType(type, buffer);
@@ -628,23 +768,29 @@ public class Messages {
       if (value instanceof CreateMessage) {
         stream.write(128);
         writeValue(stream, ((CreateMessage) value).toList());
-      } else if (value instanceof LoopingMessage) {
+      } else if (value instanceof DownloadMessage) {
         stream.write(129);
+        writeValue(stream, ((DownloadMessage) value).toList());
+      } else if (value instanceof DownloadUrlMessage) {
+        stream.write(130);
+        writeValue(stream, ((DownloadUrlMessage) value).toList());
+      } else if (value instanceof LoopingMessage) {
+        stream.write(131);
         writeValue(stream, ((LoopingMessage) value).toList());
       } else if (value instanceof MixWithOthersMessage) {
-        stream.write(130);
+        stream.write(132);
         writeValue(stream, ((MixWithOthersMessage) value).toList());
       } else if (value instanceof PlaybackSpeedMessage) {
-        stream.write(131);
+        stream.write(133);
         writeValue(stream, ((PlaybackSpeedMessage) value).toList());
       } else if (value instanceof PositionMessage) {
-        stream.write(132);
+        stream.write(134);
         writeValue(stream, ((PositionMessage) value).toList());
       } else if (value instanceof TextureMessage) {
-        stream.write(133);
+        stream.write(135);
         writeValue(stream, ((TextureMessage) value).toList());
       } else if (value instanceof VolumeMessage) {
-        stream.write(134);
+        stream.write(136);
         writeValue(stream, ((VolumeMessage) value).toList());
       } else {
         super.writeValue(stream, value);
@@ -657,7 +803,7 @@ public class Messages {
 
     void initialize();
 
-    @NonNull
+    @NonNull 
     TextureMessage create(@NonNull CreateMessage msg);
 
     void dispose(@NonNull TextureMessage msg);
@@ -670,7 +816,7 @@ public class Messages {
 
     void play(@NonNull TextureMessage msg);
 
-    @NonNull
+    @NonNull 
     PositionMessage position(@NonNull TextureMessage msg);
 
     void seekTo(@NonNull PositionMessage msg);
@@ -679,16 +825,23 @@ public class Messages {
 
     void setMixWithOthers(@NonNull MixWithOthersMessage msg);
 
+    void startDownload(@NonNull DownloadUrlMessage msg);
+
+    void stopDownload(@NonNull DownloadUrlMessage msg);
+
+    void removeDownload(@NonNull DownloadUrlMessage msg);
+
+    @NonNull 
+    DownloadMessage getDownload(@NonNull DownloadUrlMessage url);
+
+    void initializeDownloadEvents();
+
     /** The codec used by AndroidVideoPlayerApi. */
     static @NonNull MessageCodec<Object> getCodec() {
       return AndroidVideoPlayerApiCodec.INSTANCE;
     }
-    /**
-     * Sets up an instance of `AndroidVideoPlayerApi` to handle messages through the
-     * `binaryMessenger`.
-     */
-    static void setup(
-        @NonNull BinaryMessenger binaryMessenger, @Nullable AndroidVideoPlayerApi api) {
+    /**Sets up an instance of `AndroidVideoPlayerApi` to handle messages through the `binaryMessenger`. */
+    static void setup(@NonNull BinaryMessenger binaryMessenger, @Nullable AndroidVideoPlayerApi api) {
       {
         BasicMessageChannel<Object> channel =
             new BasicMessageChannel<>(
@@ -700,7 +853,8 @@ public class Messages {
                 try {
                   api.initialize();
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -723,7 +877,8 @@ public class Messages {
                 try {
                   TextureMessage output = api.create(msgArg);
                   wrapped.add(0, output);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -746,7 +901,8 @@ public class Messages {
                 try {
                   api.dispose(msgArg);
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -769,7 +925,8 @@ public class Messages {
                 try {
                   api.setLooping(msgArg);
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -792,7 +949,8 @@ public class Messages {
                 try {
                   api.setVolume(msgArg);
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -805,9 +963,7 @@ public class Messages {
       {
         BasicMessageChannel<Object> channel =
             new BasicMessageChannel<>(
-                binaryMessenger,
-                "dev.flutter.pigeon.AndroidVideoPlayerApi.setPlaybackSpeed",
-                getCodec());
+                binaryMessenger, "dev.flutter.pigeon.AndroidVideoPlayerApi.setPlaybackSpeed", getCodec());
         if (api != null) {
           channel.setMessageHandler(
               (message, reply) -> {
@@ -817,7 +973,8 @@ public class Messages {
                 try {
                   api.setPlaybackSpeed(msgArg);
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -840,7 +997,8 @@ public class Messages {
                 try {
                   api.play(msgArg);
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -863,7 +1021,8 @@ public class Messages {
                 try {
                   PositionMessage output = api.position(msgArg);
                   wrapped.add(0, output);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -886,7 +1045,8 @@ public class Messages {
                 try {
                   api.seekTo(msgArg);
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -909,7 +1069,8 @@ public class Messages {
                 try {
                   api.pause(msgArg);
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }
@@ -922,9 +1083,7 @@ public class Messages {
       {
         BasicMessageChannel<Object> channel =
             new BasicMessageChannel<>(
-                binaryMessenger,
-                "dev.flutter.pigeon.AndroidVideoPlayerApi.setMixWithOthers",
-                getCodec());
+                binaryMessenger, "dev.flutter.pigeon.AndroidVideoPlayerApi.setMixWithOthers", getCodec());
         if (api != null) {
           channel.setMessageHandler(
               (message, reply) -> {
@@ -934,7 +1093,126 @@ public class Messages {
                 try {
                   api.setMixWithOthers(msgArg);
                   wrapped.add(0, null);
-                } catch (Throwable exception) {
+                }
+ catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger, "dev.flutter.pigeon.AndroidVideoPlayerApi.startDownload", getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<Object>();
+                ArrayList<Object> args = (ArrayList<Object>) message;
+                DownloadUrlMessage msgArg = (DownloadUrlMessage) args.get(0);
+                try {
+                  api.startDownload(msgArg);
+                  wrapped.add(0, null);
+                }
+ catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger, "dev.flutter.pigeon.AndroidVideoPlayerApi.stopDownload", getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<Object>();
+                ArrayList<Object> args = (ArrayList<Object>) message;
+                DownloadUrlMessage msgArg = (DownloadUrlMessage) args.get(0);
+                try {
+                  api.stopDownload(msgArg);
+                  wrapped.add(0, null);
+                }
+ catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger, "dev.flutter.pigeon.AndroidVideoPlayerApi.removeDownload", getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<Object>();
+                ArrayList<Object> args = (ArrayList<Object>) message;
+                DownloadUrlMessage msgArg = (DownloadUrlMessage) args.get(0);
+                try {
+                  api.removeDownload(msgArg);
+                  wrapped.add(0, null);
+                }
+ catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger, "dev.flutter.pigeon.AndroidVideoPlayerApi.getDownload", getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<Object>();
+                ArrayList<Object> args = (ArrayList<Object>) message;
+                DownloadUrlMessage urlArg = (DownloadUrlMessage) args.get(0);
+                try {
+                  DownloadMessage output = api.getDownload(urlArg);
+                  wrapped.add(0, output);
+                }
+ catch (Throwable exception) {
+                  ArrayList<Object> wrappedError = wrapError(exception);
+                  wrapped = wrappedError;
+                }
+                reply.reply(wrapped);
+              });
+        } else {
+          channel.setMessageHandler(null);
+        }
+      }
+      {
+        BasicMessageChannel<Object> channel =
+            new BasicMessageChannel<>(
+                binaryMessenger, "dev.flutter.pigeon.AndroidVideoPlayerApi.initializeDownloadEvents", getCodec());
+        if (api != null) {
+          channel.setMessageHandler(
+              (message, reply) -> {
+                ArrayList<Object> wrapped = new ArrayList<Object>();
+                try {
+                  api.initializeDownloadEvents();
+                  wrapped.add(0, null);
+                }
+ catch (Throwable exception) {
                   ArrayList<Object> wrappedError = wrapError(exception);
                   wrapped = wrappedError;
                 }

@@ -6,8 +6,13 @@ package io.flutter.plugins.videoplayer;
 
 import android.content.Context;
 import android.os.Build;
+import android.os.Handler;
 import android.util.LongSparseArray;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.google.android.exoplayer2.offline.Download;
+import com.google.android.exoplayer2.offline.DownloadManager;
+import com.google.android.exoplayer2.offline.DownloadService;
 import io.flutter.FlutterInjector;
 import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -15,6 +20,8 @@ import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugins.videoplayer.Messages.AndroidVideoPlayerApi;
 import io.flutter.plugins.videoplayer.Messages.CreateMessage;
+import io.flutter.plugins.videoplayer.Messages.DownloadMessage;
+import io.flutter.plugins.videoplayer.Messages.DownloadUrlMessage;
 import io.flutter.plugins.videoplayer.Messages.LoopingMessage;
 import io.flutter.plugins.videoplayer.Messages.MixWithOthersMessage;
 import io.flutter.plugins.videoplayer.Messages.PlaybackSpeedMessage;
@@ -25,6 +32,7 @@ import io.flutter.view.TextureRegistry;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -34,6 +42,13 @@ public class VideoPlayerPlugin implements FlutterPlugin, AndroidVideoPlayerApi {
   private final LongSparseArray<VideoPlayer> videoPlayers = new LongSparseArray<>();
   private FlutterState flutterState;
   private final VideoPlayerOptions options = new VideoPlayerOptions();
+  private DownloadTracker downloadTracker;
+  private EventChannel downloadEventChannel;
+  private QueuingEventSink downloadEventSink = new QueuingEventSink();
+
+  private Handler handler = new Handler();
+  private Runnable runnable;
+  private int progressEventDelay = 500;
 
   /** Register this with the v2 embedding for the plugin to respond to lifecycle callbacks. */
   public VideoPlayerPlugin() {}
@@ -85,6 +100,11 @@ public class VideoPlayerPlugin implements FlutterPlugin, AndroidVideoPlayerApi {
             injector.flutterLoader()::getLookupKeyForAsset,
             injector.flutterLoader()::getLookupKeyForAsset,
             binding.getTextureRegistry());
+
+    startDownloadService(binding.getApplicationContext());
+    this.downloadTracker =
+        VideoPlayerDownloadUtil.getDownloadTracker(binding.getApplicationContext());
+
     flutterState.startListening(this, binding.getBinaryMessenger());
   }
 
@@ -116,6 +136,18 @@ public class VideoPlayerPlugin implements FlutterPlugin, AndroidVideoPlayerApi {
 
   public void initialize() {
     disposeAllPlayers();
+  }
+
+  /** Start the download service if it should be running but it's not currently. */
+  private void startDownloadService(Context context) {
+    // Starting the service in the foreground causes notification flicker if there is no scheduled
+    // action. Starting it in the background throws an exception if the app is in the background too
+    // (e.g. if device screen is locked).
+    try {
+      DownloadService.start(context, VideoPlayerDownloadService.class);
+    } catch (IllegalStateException e) {
+      DownloadService.startForeground(context, VideoPlayerDownloadService.class);
+    }
   }
 
   public @NonNull TextureMessage create(@NonNull CreateMessage arg) {
@@ -212,6 +244,87 @@ public class VideoPlayerPlugin implements FlutterPlugin, AndroidVideoPlayerApi {
     options.mixWithOthers = arg.getMixWithOthers();
   }
 
+  @Override
+  public void startDownload(@NonNull DownloadUrlMessage arg) {
+    String url = arg.getUrl();
+    downloadTracker.startDownload(url);
+  }
+
+  @Override
+  public void stopDownload(@NonNull DownloadUrlMessage arg) {
+    String url = arg.getUrl();
+    downloadTracker.stopDownload(url);
+  }
+
+  @Override
+  public void removeDownload(@NonNull DownloadUrlMessage arg) {
+    String url = arg.getUrl();
+    downloadTracker.removeDownload(url);
+  }
+
+  @Override
+  public @NonNull DownloadMessage getDownload(@NonNull DownloadUrlMessage arg) {
+    Download download = downloadTracker.getDownload(arg.getUrl());
+
+    if (download == null) {
+      return new DownloadMessage.Builder().build();
+    } else {
+      return new DownloadMessage.Builder()
+          .setUrl(download.request.uri.toString())
+          .setState((long) download.state)
+          .setPercentDownloaded((double) download.getPercentDownloaded())
+          .setBytesDownloaded(download.getBytesDownloaded())
+          .build();
+    }
+  }
+
+  @Override
+  public void initializeDownloadEvents() {
+    downloadEventChannel =
+        new EventChannel(flutterState.binaryMessenger, "flutter.io/videoPlayer/downloadEvents");
+
+    QueuingEventSink eventSink = this.downloadEventSink;
+
+    downloadEventChannel.setStreamHandler(
+        new EventChannel.StreamHandler() {
+          @Override
+          public void onListen(Object o, EventChannel.EventSink sink) {
+            eventSink.setDelegate(sink);
+          }
+
+          @Override
+          public void onCancel(Object o) {
+            eventSink.setDelegate(null);
+          }
+        });
+
+    DownloadManager downloadManager =
+        VideoPlayerDownloadUtil.getDownloadManager(flutterState.applicationContext);
+    downloadManager.addListener(new EventNotificationHelper(this.downloadEventSink));
+
+    handler.postDelayed(
+        runnable =
+            new Runnable() {
+              public void run() {
+                handler.postDelayed(runnable, progressEventDelay);
+                DownloadManager downloadManager =
+                    VideoPlayerDownloadUtil.getDownloadManager(flutterState.applicationContext);
+                List<Download> downloads = downloadManager.getCurrentDownloads();
+                for (Download download : downloads) {
+                  if (download.state == Download.STATE_DOWNLOADING) {
+                    Map<String, Object> event = new HashMap<>();
+                    event.put("event", "progress");
+                    event.put("url", download.request.uri.toString());
+                    event.put("state", (long) download.state);
+                    event.put("percent", (double) download.getPercentDownloaded());
+                    downloadEventSink.success(event);
+                  }
+                }
+              }
+            },
+        progressEventDelay);
+  }
+
   private interface KeyForAssetFn {
     String get(String asset);
   }
@@ -246,6 +359,44 @@ public class VideoPlayerPlugin implements FlutterPlugin, AndroidVideoPlayerApi {
 
     void stopListening(BinaryMessenger messenger) {
       AndroidVideoPlayerApi.setup(messenger, null);
+    }
+  }
+
+  /**
+   * Creates and displays notifications for downloads when they complete or fail.
+   *
+   * <p>This helper will outlive the lifespan of a single instance of {@link
+   * VideoPlayerDownloadService}. It is static to avoid leaking the first {@link
+   * VideoPlayerDownloadService} instance.
+   */
+  private static final class EventNotificationHelper implements DownloadManager.Listener {
+
+    private final QueuingEventSink eventSink;
+
+    public EventNotificationHelper(QueuingEventSink eventSink) {
+      this.eventSink = eventSink;
+    }
+
+    @Override
+    public void onDownloadChanged(
+        DownloadManager downloadManager, Download download, @Nullable Exception finalException) {
+      if (download.state == Download.STATE_COMPLETED) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("event", "progress");
+        event.put("url", download.request.uri.toString());
+        event.put("state", (long) download.state);
+        event.put("percent", (double) download.getPercentDownloaded());
+        this.eventSink.success(event);
+      } else if (download.state == Download.STATE_FAILED) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("event", "progress");
+        event.put("url", download.request.uri.toString());
+        event.put("state", (long) download.state);
+        event.put("percent", (double) download.getPercentDownloaded());
+        this.eventSink.success(event);
+      } else {
+        return;
+      }
     }
   }
 }

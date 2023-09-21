@@ -20,23 +20,29 @@ class _TestHostVideoPlayerApiCodec extends StandardMessageCodec {
     if (value is CreateMessage) {
       buffer.putUint8(128);
       writeValue(buffer, value.encode());
-    } else if (value is LoopingMessage) {
+    } else if (value is DownloadMessage) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    } else if (value is MixWithOthersMessage) {
+    } else if (value is DownloadUrlMessage) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
-    } else if (value is PlaybackSpeedMessage) {
+    } else if (value is LoopingMessage) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
-    } else if (value is PositionMessage) {
+    } else if (value is MixWithOthersMessage) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
-    } else if (value is TextureMessage) {
+    } else if (value is PlaybackSpeedMessage) {
       buffer.putUint8(133);
       writeValue(buffer, value.encode());
-    } else if (value is VolumeMessage) {
+    } else if (value is PositionMessage) {
       buffer.putUint8(134);
+      writeValue(buffer, value.encode());
+    } else if (value is TextureMessage) {
+      buffer.putUint8(135);
+      writeValue(buffer, value.encode());
+    } else if (value is VolumeMessage) {
+      buffer.putUint8(136);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -49,16 +55,20 @@ class _TestHostVideoPlayerApiCodec extends StandardMessageCodec {
       case 128:
         return CreateMessage.decode(readValue(buffer)!);
       case 129:
-        return LoopingMessage.decode(readValue(buffer)!);
+        return DownloadMessage.decode(readValue(buffer)!);
       case 130:
-        return MixWithOthersMessage.decode(readValue(buffer)!);
+        return DownloadUrlMessage.decode(readValue(buffer)!);
       case 131:
-        return PlaybackSpeedMessage.decode(readValue(buffer)!);
+        return LoopingMessage.decode(readValue(buffer)!);
       case 132:
-        return PositionMessage.decode(readValue(buffer)!);
+        return MixWithOthersMessage.decode(readValue(buffer)!);
       case 133:
-        return TextureMessage.decode(readValue(buffer)!);
+        return PlaybackSpeedMessage.decode(readValue(buffer)!);
       case 134:
+        return PositionMessage.decode(readValue(buffer)!);
+      case 135:
+        return TextureMessage.decode(readValue(buffer)!);
+      case 136:
         return VolumeMessage.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -92,6 +102,16 @@ abstract class TestHostVideoPlayerApi {
   void pause(TextureMessage msg);
 
   void setMixWithOthers(MixWithOthersMessage msg);
+
+  void startDownload(DownloadUrlMessage msg);
+
+  void stopDownload(DownloadUrlMessage msg);
+
+  void removeDownload(DownloadUrlMessage msg);
+
+  DownloadMessage getDownload(DownloadUrlMessage url);
+
+  void initializeDownloadEvents();
 
   static void setup(TestHostVideoPlayerApi? api,
       {BinaryMessenger? binaryMessenger}) {
@@ -330,6 +350,112 @@ abstract class TestHostVideoPlayerApi {
           assert(arg_msg != null,
               'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.setMixWithOthers was null, expected non-null MixWithOthersMessage.');
           api.setMixWithOthers(arg_msg!);
+          return <Object?>[];
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.AndroidVideoPlayerApi.startDownload', codec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel, null);
+      } else {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel,
+                (Object? message) async {
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.startDownload was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final DownloadUrlMessage? arg_msg = (args[0] as DownloadUrlMessage?);
+          assert(arg_msg != null,
+              'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.startDownload was null, expected non-null DownloadUrlMessage.');
+          api.startDownload(arg_msg!);
+          return <Object?>[];
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.AndroidVideoPlayerApi.stopDownload', codec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel, null);
+      } else {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel,
+                (Object? message) async {
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.stopDownload was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final DownloadUrlMessage? arg_msg = (args[0] as DownloadUrlMessage?);
+          assert(arg_msg != null,
+              'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.stopDownload was null, expected non-null DownloadUrlMessage.');
+          api.stopDownload(arg_msg!);
+          return <Object?>[];
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.AndroidVideoPlayerApi.removeDownload', codec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel, null);
+      } else {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel,
+                (Object? message) async {
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.removeDownload was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final DownloadUrlMessage? arg_msg = (args[0] as DownloadUrlMessage?);
+          assert(arg_msg != null,
+              'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.removeDownload was null, expected non-null DownloadUrlMessage.');
+          api.removeDownload(arg_msg!);
+          return <Object?>[];
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.AndroidVideoPlayerApi.getDownload', codec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel, null);
+      } else {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel,
+                (Object? message) async {
+          assert(message != null,
+              'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.getDownload was null.');
+          final List<Object?> args = (message as List<Object?>?)!;
+          final DownloadUrlMessage? arg_url = (args[0] as DownloadUrlMessage?);
+          assert(arg_url != null,
+              'Argument for dev.flutter.pigeon.AndroidVideoPlayerApi.getDownload was null, expected non-null DownloadUrlMessage.');
+          final DownloadMessage output = api.getDownload(arg_url!);
+          return <Object?>[output];
+        });
+      }
+    }
+    {
+      final BasicMessageChannel<Object?> channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.AndroidVideoPlayerApi.initializeDownloadEvents',
+          codec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel, null);
+      } else {
+        _testBinaryMessengerBinding!.defaultBinaryMessenger
+            .setMockDecodedMessageHandler<Object?>(channel,
+                (Object? message) async {
+          // ignore message
+          api.initializeDownloadEvents();
           return <Object?>[];
         });
       }

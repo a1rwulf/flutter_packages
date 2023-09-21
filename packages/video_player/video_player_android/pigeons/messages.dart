@@ -56,6 +56,20 @@ class MixWithOthersMessage {
   bool mixWithOthers;
 }
 
+class DownloadUrlMessage {
+  DownloadUrlMessage(this.url);
+  String? url;
+}
+
+class DownloadMessage {
+  DownloadMessage(
+      this.url, this.state, this.percentDownloaded, this.bytesDownloaded);
+  final String? url;
+  final int? state;
+  final double? percentDownloaded;
+  final int? bytesDownloaded;
+}
+
 @HostApi(dartHostTestHandler: 'TestHostVideoPlayerApi')
 abstract class AndroidVideoPlayerApi {
   void initialize();
@@ -69,4 +83,9 @@ abstract class AndroidVideoPlayerApi {
   void seekTo(PositionMessage msg);
   void pause(TextureMessage msg);
   void setMixWithOthers(MixWithOthersMessage msg);
+  void startDownload(DownloadUrlMessage msg);
+  void stopDownload(DownloadUrlMessage msg);
+  void removeDownload(DownloadUrlMessage msg);
+  DownloadMessage getDownload(DownloadUrlMessage url);
+  void initializeDownloadEvents();
 }

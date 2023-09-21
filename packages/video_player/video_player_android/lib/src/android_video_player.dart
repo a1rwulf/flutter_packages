@@ -170,8 +170,68 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
         .setMixWithOthers(MixWithOthersMessage(mixWithOthers: mixWithOthers));
   }
 
+  @override
+  Future<void> startDownload(String url) {
+    return _api.startDownload(DownloadUrlMessage(url: url));
+  }
+
+  @override
+  Future<void> stopDownload(String url) {
+    return _api.stopDownload(DownloadUrlMessage(url: url));
+  }
+
+  @override
+  Future<void> removeDownload(String url) {
+    return _api.removeDownload(DownloadUrlMessage(url: url));
+  }
+
+  @override
+  Future<Download?> getDownload(String url) async {
+    final DownloadMessage downloadMessage =
+        await _api.getDownload(DownloadUrlMessage(url: url));
+    if (downloadMessage.url == null) {
+      return Future<Download?>.value();
+    } else {
+      return Download(
+        url: downloadMessage.url!,
+        state: downloadMessage.state!,
+        percentDownloaded: downloadMessage.percentDownloaded!,
+        bytesDownloaded: downloadMessage.bytesDownloaded!,
+      );
+    }
+  }
+
+  @override
+  Future<void> initDownloadEvents() {
+    return _api.initializeDownloadEvents();
+  }
+
+  @override
+  Stream<Download> downloadEvents() {
+    return _downloadEventChannel()
+        .receiveBroadcastStream()
+        .map((dynamic event) {
+      final Map<dynamic, dynamic> map = event as Map<dynamic, dynamic>;
+      switch (map['event']) {
+        case 'progress':
+          return Download(
+              url: map['url'] as String,
+              state: 1,
+              bytesDownloaded: 0,
+              percentDownloaded: (map['percent'] as num?)?.toDouble() ?? 0.0);
+        default:
+          return const Download(
+              url: '', state: 0, bytesDownloaded: 0, percentDownloaded: 0.0);
+      }
+    });
+  }
+
   EventChannel _eventChannelFor(int textureId) {
     return EventChannel('flutter.io/videoPlayer/videoEvents$textureId');
+  }
+
+  EventChannel _downloadEventChannel() {
+    return const EventChannel('flutter.io/videoPlayer/downloadEvents');
   }
 
   static const Map<VideoFormat, String> _videoFormatStringMap =

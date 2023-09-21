@@ -11,6 +11,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.view.Surface;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -21,6 +22,8 @@ import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Player.Listener;
 import com.google.android.exoplayer2.audio.AudioAttributes;
+import com.google.android.exoplayer2.offline.DownloadRequest;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
@@ -29,7 +32,6 @@ import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource;
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 import io.flutter.plugin.common.EventChannel;
@@ -62,7 +64,9 @@ final class VideoPlayer {
 
   private final VideoPlayerOptions options;
 
-  private DefaultHttpDataSource.Factory httpDataSourceFactory = new DefaultHttpDataSource.Factory();
+  private DefaultHttpDataSource.Factory httpDataSourceFactory;
+
+  private DownloadTracker downloadTracker;
 
   VideoPlayer(
       Context context,
@@ -76,12 +80,26 @@ final class VideoPlayer {
     this.textureEntry = textureEntry;
     this.options = options;
 
-    ExoPlayer exoPlayer = new ExoPlayer.Builder(context).build();
+    this.downloadTracker = VideoPlayerDownloadUtil.getDownloadTracker(context);
+    this.httpDataSourceFactory = VideoPlayerDownloadUtil.getHttpDataSourceFactory(context);
+    buildHttpDataSourceFactory(httpHeaders);
+    DataSource.Factory dataSourceFactory = VideoPlayerDownloadUtil.getDataSourceFactory(context);
+
+    ExoPlayer exoPlayer =
+        new ExoPlayer.Builder(context)
+            .setMediaSourceFactory(
+                new DefaultMediaSourceFactory(context).setDataSourceFactory(dataSourceFactory))
+            .build();
     Uri uri = Uri.parse(dataSource);
 
-    buildHttpDataSourceFactory(httpHeaders);
-    DataSource.Factory dataSourceFactory =
-        new DefaultDataSource.Factory(context, httpDataSourceFactory);
+    // DataSource.Factory dataSourceFactory =
+    //     new DefaultDataSource.Factory(context, httpDataSourceFactory);
+
+    // Cache downloadCache = VideoPlayerDownloadUtil.getDownloadCache(context);
+    // new CacheDataSource.Factory()
+    //     .setCache(downloadCache)
+    //     .setUpstreamDataSourceFactory(httpDataSourceFactory)
+    //     .setCacheWriteDataSinkFactory(null); // Disable writing.
 
     MediaSource mediaSource = buildMediaSource(uri, dataSourceFactory, formatHint);
 
@@ -147,26 +165,45 @@ final class VideoPlayer {
           break;
       }
     }
+    MediaItem mediaItem = MediaItem.fromUri(uri);
+    mediaItem =
+        maybeSetDownloadProperties(
+            mediaItem, this.downloadTracker.getDownloadRequest(mediaItem.localConfiguration.uri));
+
     switch (type) {
       case C.CONTENT_TYPE_SS:
         return new SsMediaSource.Factory(
                 new DefaultSsChunkSource.Factory(mediaDataSourceFactory), mediaDataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(uri));
+            .createMediaSource(mediaItem);
       case C.CONTENT_TYPE_DASH:
         return new DashMediaSource.Factory(
                 new DefaultDashChunkSource.Factory(mediaDataSourceFactory), mediaDataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(uri));
+            .createMediaSource(mediaItem);
       case C.CONTENT_TYPE_HLS:
-        return new HlsMediaSource.Factory(mediaDataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(uri));
+        return new HlsMediaSource.Factory(mediaDataSourceFactory).createMediaSource(mediaItem);
       case C.CONTENT_TYPE_OTHER:
         return new ProgressiveMediaSource.Factory(mediaDataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(uri));
+            .createMediaSource(mediaItem);
       default:
         {
           throw new IllegalStateException("Unsupported type: " + type);
         }
     }
+  }
+
+  private static MediaItem maybeSetDownloadProperties(
+      MediaItem item, @Nullable DownloadRequest downloadRequest) {
+    if (downloadRequest == null) {
+      return item;
+    }
+    MediaItem.Builder builder = item.buildUpon();
+    builder
+        .setMediaId(downloadRequest.id)
+        .setUri(downloadRequest.uri)
+        .setCustomCacheKey(downloadRequest.customCacheKey)
+        .setMimeType(downloadRequest.mimeType)
+        .setStreamKeys(downloadRequest.streamKeys);
+    return builder.build();
   }
 
   private void setUpVideoPlayer(ExoPlayer exoPlayer, QueuingEventSink eventSink) {
