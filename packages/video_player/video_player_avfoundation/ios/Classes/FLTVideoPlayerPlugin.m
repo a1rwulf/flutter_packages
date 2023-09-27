@@ -799,7 +799,7 @@ NS_INLINE UIViewController *rootViewController(void) {
     NSURL *assetURL = [baseURL URLByAppendingPathComponent:assetPath];
     AVURLAsset *asset = [AVURLAsset assetWithURL:assetURL];
     if (asset.assetCache && asset.assetCache.isPlayableOffline) {
-      FLTDownloadMessage *downloadMsg = [FLTDownloadMessage makeWithUrl:nil
+      FLTDownloadMessage *downloadMsg = [FLTDownloadMessage makeWithUrl:input.url
                                                                   state:@3
                                                       percentDownloaded:@100.0
                                                         bytesDownloaded:@0];
