@@ -2,6 +2,10 @@
 
 * Updates minimum supported SDK version to Flutter 3.7/Dart 2.19.
 
+## 2.0.17
+
+* Use SEADEV Studios GmbH specific interface
+
 ## 2.0.16
 
 * Synchronizes `VideoPlayerValue.isPlaying` with `VideoElement`.

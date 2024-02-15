@@ -1,3 +1,7 @@
+## 2.8.1
+
+* Add support for web
+
 ## 2.8.0
 
 * Updates minimum supported SDK version to Flutter 3.7/Dart 2.19.
