@@ -108,12 +108,11 @@ class _DownloadVideosListState extends State<_DownloadVideosList> {
   late VideoPlayerController downloadsController;
   @override
   void initState() {
-    downloadsController = VideoPlayerController.networkUrl(Uri.parse(
-        'https://vs-dev.sisers.seadev-studios.com/ES3KawVfFTvPSoaOrbe3m/stream.m3u8'));
+    downloadsController = VideoPlayerController.networkUrl(
+        Uri.parse('https://vs-dev.sisers.seadev-studios.com/ES3KawVfFTvPSoaOrbe3m/stream.m3u8'));
 
     WidgetsBinding.instance.addPostFrameCallback((Duration timeStamp) {
-      final DownloadProgress t =
-          Provider.of<DownloadProgress>(context, listen: false);
+      final DownloadProgress t = Provider.of<DownloadProgress>(context, listen: false);
       downloadsController.initDownloadEvents((Download download) {
         t.updateProgress(download.url, download.percentDownloaded);
         log('Downloaded ${download.url}: ${download.percentDownloaded}%');
@@ -129,28 +128,23 @@ class _DownloadVideosListState extends State<_DownloadVideosList> {
       children: <Widget>[
         _ExampleDownloadCard(
           title: 'Stretching 1 (3m)',
-          url:
-              'https://vs-dev.sisers.seadev-studios.com/ES3KawVfFTvPSoaOrbe3m/stream.m3u8',
+          url: 'https://vs-dev.sisers.seadev-studios.com/dksUDCxcUP0aIxqA7nLMD/stream.m3u8',
         ),
         _ExampleDownloadCard(
           title: 'Hohoho (69m)',
-          url:
-              'https://vs-dev.sisers.seadev-studios.com/E87Un5n9SUT-kr6o8xJ3h/stream.m3u8',
+          url: 'https://vs-dev.sisers.seadev-studios.com/E87Un5n9SUT-kr6o8xJ3h/stream.m3u8',
         ),
         _ExampleDownloadCard(
           title: 'Stretching 2 (11m)',
-          url:
-              'https://vs-dev.sisers.seadev-studios.com/FN1hLbya-T9WTTt0G75IR/stream.m3u8',
+          url: 'https://vs-dev.sisers.seadev-studios.com/FN1hLbya-T9WTTt0G75IR/stream.m3u8',
         ),
         _ExampleDownloadCard(
           title: 'Stretching 3 (13m)',
-          url:
-              'https://vs-dev.sisers.seadev-studios.com/fF2iglaS0O4gopE4A6mhO/stream.m3u8',
+          url: 'https://vs-dev.sisers.seadev-studios.com/fF2iglaS0O4gopE4A6mhO/stream.m3u8',
         ),
         _ExampleDownloadCard(
           title: 'Long name (7m)',
-          url:
-              'https://vs-dev.sisers.seadev-studios.com/SDH6ULGVI7zZxqz5rsr-Q/stream.m3u8',
+          url: 'https://vs-dev.sisers.seadev-studios.com/SDH6ULGVI7zZxqz5rsr-Q/stream.m3u8',
         ),
       ],
     );
@@ -172,8 +166,12 @@ class _ExampleDownloadCard extends StatefulWidget {
 class _ExampleDownloadCardState extends State<_ExampleDownloadCard> {
   @override
   void initState() {
-    widget._controller =
-        VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    widget._controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    widget._controller.getDownload(widget.url).then((Download? systemDownload) {
+      if (systemDownload != null) {
+        log('$systemDownload.url state:  $systemDownload.state');
+      }
+    });
     super.initState();
   }
 
@@ -207,8 +205,7 @@ class _ExampleDownloadCardState extends State<_ExampleDownloadCard> {
                   child: const Text('Remove'),
                   onPressed: () {
                     widget._controller.removeDownload(widget.url);
-                    Provider.of<DownloadProgress>(context, listen: false)
-                        .updateProgress(widget.url, 0.0);
+                    Provider.of<DownloadProgress>(context, listen: false).updateProgress(widget.url, 0.0);
                   },
                 ),
               ]),
@@ -241,8 +238,7 @@ class _DownloadProgressState extends State<_DownloadProgress> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((Duration timeStamp) {
-      final DownloadProgress t =
-          Provider.of<DownloadProgress>(context, listen: false);
+      final DownloadProgress t = Provider.of<DownloadProgress>(context, listen: false);
       t.addListener(() {
         if (t.progressMap.containsKey(widget.url)) {
           setState(() {
@@ -262,11 +258,7 @@ class _DownloadProgressState extends State<_DownloadProgress> {
   @override
   Widget build(BuildContext context) {
     if (progress < 1.0) {
-      return SizedBox(
-          height: 20,
-          width: 20,
-          child:
-              CircularProgressIndicator(color: Colors.blue, value: progress));
+      return SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.blue, value: progress));
     } else {
       return const Text('Finished');
     }
@@ -293,13 +285,10 @@ class _ButterFlyAssetVideoInList extends StatelessWidget {
                 leading: Icon(Icons.cake),
                 title: Text('Video video'),
               ),
-              Stack(
-                  alignment: FractionalOffset.bottomRight +
-                      const FractionalOffset(-0.1, -0.1),
-                  children: <Widget>[
-                    _ButterFlyAssetVideo(),
-                    Image.asset('assets/flutter-mark-square-64.png'),
-                  ]),
+              Stack(alignment: FractionalOffset.bottomRight + const FractionalOffset(-0.1, -0.1), children: <Widget>[
+                _ButterFlyAssetVideo(),
+                Image.asset('assets/flutter-mark-square-64.png'),
+              ]),
             ],
           ),
         ])),
@@ -416,18 +405,15 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
   late VideoPlayerController _controller;
 
   Future<ClosedCaptionFile> _loadCaptions() async {
-    final String fileContents = await DefaultAssetBundle.of(context)
-        .loadString('assets/bumble_bee_captions.vtt');
-    return WebVTTCaptionFile(
-        fileContents); // For vtt files, use WebVTTCaptionFile
+    final String fileContents = await DefaultAssetBundle.of(context).loadString('assets/bumble_bee_captions.vtt');
+    return WebVTTCaptionFile(fileContents); // For vtt files, use WebVTTCaptionFile
   }
 
   @override
   void initState() {
     super.initState();
     _controller = VideoPlayerController.networkUrl(
-      Uri.parse(
-          'https://vs-dev.sisers.seadev-studios.com/dksUDCxcUP0aIxqA7nLMD/stream.m3u8'),
+      Uri.parse('https://vs-dev.sisers.seadev-studios.com/dksUDCxcUP0aIxqA7nLMD/stream.m3u8'),
       closedCaptionFile: _loadCaptions(),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
@@ -603,8 +589,7 @@ class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
   void initState() {
     super.initState();
 
-    _videoPlayerController =
-        VideoPlayerController.asset('assets/Butterfly-209.mp4');
+    _videoPlayerController = VideoPlayerController.asset('assets/Butterfly-209.mp4');
     _videoPlayerController.addListener(() {
       if (startedPlaying && !_videoPlayerController.value.isPlaying) {
         Navigator.pop(context);
