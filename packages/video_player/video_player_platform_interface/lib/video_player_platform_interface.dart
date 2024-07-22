@@ -110,7 +110,7 @@ abstract class VideoPlayerPlatform extends PlatformInterface {
 
   /// Starts downloading of the video from the specified url.
   /// The URL is also used as the identifier for the download.
-  Future<void> startDownload(String url) {
+  Future<void> startDownload(String url, int width, int height) {
     throw UnimplementedError('startDownload() has not been implemented.');
   }
 

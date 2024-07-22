@@ -269,14 +269,20 @@ static id GetNullableObjectAtIndex(NSArray *array, NSInteger key) {
 @end
 
 @implementation FLTDownloadUrlMessage
-+ (instancetype)makeWithUrl:(nullable NSString *)url {
++ (instancetype)makeWithUrl:(nullable NSString *)url
+    height:(nullable NSNumber *)height
+    width:(nullable NSNumber *)width {
   FLTDownloadUrlMessage* pigeonResult = [[FLTDownloadUrlMessage alloc] init];
   pigeonResult.url = url;
+  pigeonResult.height = height;
+  pigeonResult.width = width;
   return pigeonResult;
 }
 + (FLTDownloadUrlMessage *)fromList:(NSArray *)list {
   FLTDownloadUrlMessage *pigeonResult = [[FLTDownloadUrlMessage alloc] init];
   pigeonResult.url = GetNullableObjectAtIndex(list, 0);
+  pigeonResult.height = GetNullableObjectAtIndex(list, 1);
+  pigeonResult.width = GetNullableObjectAtIndex(list, 2);
   return pigeonResult;
 }
 + (nullable FLTDownloadUrlMessage *)nullableFromList:(NSArray *)list {
@@ -285,6 +291,8 @@ static id GetNullableObjectAtIndex(NSArray *array, NSInteger key) {
 - (NSArray *)toList {
   return @[
     (self.url ?: [NSNull null]),
+    (self.height ?: [NSNull null]),
+    (self.width ?: [NSNull null]),
   ];
 }
 @end

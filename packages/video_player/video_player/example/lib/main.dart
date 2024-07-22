@@ -192,7 +192,7 @@ class _ExampleDownloadCardState extends State<_ExampleDownloadCard> {
                 TextButton(
                   child: const Text('Start'),
                   onPressed: () {
-                    widget._controller.startDownload(widget.url);
+                    widget._controller.startDownload(widget.url, 1920, 1080);
                   },
                 ),
                 TextButton(

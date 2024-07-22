@@ -33,6 +33,8 @@ import com.google.android.exoplayer2.offline.DownloadService;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.Util;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionParameters;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -119,18 +121,18 @@ public class DownloadTracker {
   //   }
   // }
 
-  public void startDownload(String uri) {
+  public void startDownload(String uri, int width, int height) {
     MediaItem mediaItem = MediaItem.fromUri(uri);
     @Nullable Download download = downloads.get(checkNotNull(mediaItem.localConfiguration).uri);
     if (download != null && download.state != Download.STATE_FAILED) {
       if (download != null && download.state == Download.STATE_STOPPED) {
         Log.d(TAG, "Download in stopped state - reset stop reason...");
         DownloadService.sendSetStopReason(
-            context,
-            VideoPlayerDownloadService.class,
-            download.request.id,
-            0,
-            /* foreground= */ false);
+          context,
+          VideoPlayerDownloadService.class,
+          download.request.id,
+          0,
+          /* foreground= */ false);
       } else {
         Log.d(TAG, "Download state: " + download.state + " skip start...");
       }
@@ -138,13 +140,17 @@ public class DownloadTracker {
       if (startDownloadHelper != null) {
         startDownloadHelper.release();
       }
-      startDownloadHelper =
-          new StartDownloadHelper(
-              DownloadHelper.forMediaItem(
-                  context, mediaItem, new DefaultRenderersFactory(context), dataSourceFactory),
-              mediaItem);
-    }
+
+    // Create track selection parameters with preferred resolution
+    TrackSelectionParameters trackSelectionParameters = new DefaultTrackSelector.ParametersBuilder(context).setMaxVideoSize(width, height).build();
+
+       // Apply track selection parameters to the download helper
+   startDownloadHelper = new StartDownloadHelper(
+            DownloadHelper.forMediaItem(
+                mediaItem, trackSelectionParameters, new DefaultRenderersFactory(context), dataSourceFactory),
+            mediaItem);
   }
+}
 
   public void stopDownload(String uri) {
     MediaItem mediaItem = MediaItem.fromUri(uri);

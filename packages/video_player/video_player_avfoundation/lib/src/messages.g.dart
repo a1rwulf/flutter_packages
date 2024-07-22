@@ -201,13 +201,21 @@ class MixWithOthersMessage {
 class DownloadUrlMessage {
   DownloadUrlMessage({
     this.url,
+    this.height,
+    this.width,
   });
 
   String? url;
 
+  int? height;
+
+  int? width;
+
   Object encode() {
     return <Object?>[
       url,
+      height,
+      width,
     ];
   }
 
@@ -215,6 +223,8 @@ class DownloadUrlMessage {
     result as List<Object?>;
     return DownloadUrlMessage(
       url: result[0] as String?,
+      height: result[1] as int?,
+      width: result[2] as int?,
     );
   }
 }

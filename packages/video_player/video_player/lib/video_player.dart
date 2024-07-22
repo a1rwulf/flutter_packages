@@ -546,8 +546,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   /// Starts downloading a video.
-  Future<void> startDownload(String url) async {
-    await _videoPlayerPlatform.startDownload(url);
+  Future<void> startDownload(String url, int width, int height) async {
+    await _videoPlayerPlatform.startDownload(url, width, height);
   }
 
   /// Stops downloading a video.

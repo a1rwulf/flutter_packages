@@ -89,8 +89,12 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface FLTDownloadUrlMessage : NSObject
-+ (instancetype)makeWithUrl:(nullable NSString *)url;
++ (instancetype)makeWithUrl:(nullable NSString *)url
+    height:(nullable NSNumber *)height
+    width:(nullable NSNumber *)width;
 @property(nonatomic, copy, nullable) NSString * url;
+@property(nonatomic, strong, nullable) NSNumber * height;
+@property(nonatomic, strong, nullable) NSNumber * width;
 @end
 
 @interface FLTDownloadMessage : NSObject

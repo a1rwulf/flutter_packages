@@ -770,7 +770,9 @@ NS_INLINE UIViewController *rootViewController(void) {
                 error:(FlutterError *_Nullable __autoreleasing *)error {
   if (input.url) {
     NSString *url = input.url;
-    [self setupAssetAction:url withAction:1];
+      int width = input.width.intValue;
+      int height = input.height.intValue;
+    [self setupAssetAction:url withAction:1 height:height width:width];
   }
 }
 
@@ -778,7 +780,7 @@ NS_INLINE UIViewController *rootViewController(void) {
                error:(FlutterError *_Nullable __autoreleasing *)error {
   if (input.url) {
     NSString *url = input.url;
-    [self setupAssetAction:url withAction:2];
+    [self setupAssetAction:url withAction:2 height:0 width:0];
   }
 }
 
@@ -786,7 +788,7 @@ NS_INLINE UIViewController *rootViewController(void) {
                  error:(FlutterError *_Nullable __autoreleasing *)error {
   if (input.url) {
     NSString *url = input.url;
-    [self setupAssetAction:url withAction:3];
+    [self setupAssetAction:url withAction:3 height:0 width:0];
   }
 }
 
@@ -879,11 +881,11 @@ NS_INLINE UIViewController *rootViewController(void) {
   }
 }
 
-- (void)setupAssetAction:(NSString *)urlString withAction:(int)action {
+- (void)setupAssetAction:(NSString *)urlString withAction:(int)action height:(int)height width:(int)width {
   NSString *assetPath = [[NSUserDefaults standardUserDefaults] valueForKey:urlString];
 
   if (assetPath == nil || ![assetPath isKindOfClass:[NSString class]]) {
-    [self startActionInternal:urlString withAction:action];
+    [self startActionInternal:urlString withAction:action width:width height:height];
   } else {
     NSURL *baseURL = [NSURL fileURLWithPath:NSHomeDirectory()];
     NSURL *assetURL = [baseURL URLByAppendingPathComponent:assetPath];
@@ -894,21 +896,21 @@ NS_INLINE UIViewController *rootViewController(void) {
         [self deleteOfflineAsset:urlString];
       }
     } else {
-      // We have an assetPath reference but no playable asset
-      // this happens when a user deletes a downloaded video via
-      // the system settings
-
-      // Remove our saved storage reference
-      NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-      [userDefaults removeObjectForKey:urlString];
-      [userDefaults synchronize];
-
-      [self startActionInternal:urlString withAction:action];
+        // We have an assetPath reference but no playable asset
+        // this happens when a user deletes a downloaded video via
+        // the system settings
+        
+        // Remove our saved storage reference
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        [userDefaults removeObjectForKey:urlString];
+        [userDefaults synchronize];
+        
+        [self startActionInternal:urlString withAction:action width:width height:height];
     }
   }
 }
 
-- (void)startActionInternal:(NSString *)urlString withAction:(int)action {
+- (void)startActionInternal:(NSString *)urlString withAction:(int)action width:(int)width height:(int)height {
   NSURL *url = [NSURL URLWithString:urlString];
   AVURLAsset *asset = [AVURLAsset assetWithURL:url];
 
@@ -927,11 +929,15 @@ NS_INLINE UIViewController *rootViewController(void) {
         }
 
         if (action == 1) {
-          if (!myDownloadTask)
-            myDownloadTask = [self.downloadSession assetDownloadTaskWithURLAsset:asset
-                                                                      assetTitle:urlString
-                                                                assetArtworkData:nil
-                                                                         options:nil];
+          if (!myDownloadTask){
+              CGSize presentationSize = CGSizeMake(width, height);
+              NSValue *presentationSizeValue = [NSValue valueWithCGSize:presentationSize];
+              NSDictionary *options = @{ AVAssetDownloadTaskMinimumRequiredPresentationSizeKey : presentationSizeValue };
+              myDownloadTask = [self.downloadSession assetDownloadTaskWithURLAsset:asset
+                                                                        assetTitle:urlString
+                                                                  assetArtworkData:nil
+                                                                           options:options];
+            }
         }
 
         if (!myDownloadTask) return;

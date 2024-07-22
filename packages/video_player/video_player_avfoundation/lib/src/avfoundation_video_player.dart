@@ -164,8 +164,8 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
-  Future<void> startDownload(String url) {
-    return _api.startDownload(DownloadUrlMessage(url: url));
+  Future<void> startDownload(String url, int width, int height) {
+    return _api.startDownload(DownloadUrlMessage(url: url, width: width, height: height));
   }
 
   @override

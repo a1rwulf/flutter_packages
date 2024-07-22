@@ -247,7 +247,9 @@ public class VideoPlayerPlugin implements FlutterPlugin, AndroidVideoPlayerApi {
   @Override
   public void startDownload(@NonNull DownloadUrlMessage arg) {
     String url = arg.getUrl();
-    downloadTracker.startDownload(url);
+    int heigt = Math.toIntExact(arg.getHeight());
+    int width = Math.toIntExact(arg.getWidth());
+    downloadTracker.startDownload(url, width, heigt);
   }
 
   @Override

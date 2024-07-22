@@ -595,6 +595,26 @@ public class Messages {
       this.url = setterArg;
     }
 
+    private @Nullable Long height;
+
+    public @Nullable Long getHeight() {
+      return height;
+    }
+
+    public void setHeight(@Nullable Long setterArg) {
+      this.height = setterArg;
+    }
+
+    private @Nullable Long width;
+
+    public @Nullable Long getWidth() {
+      return width;
+    }
+
+    public void setWidth(@Nullable Long setterArg) {
+      this.width = setterArg;
+    }
+
     public static final class Builder {
 
       private @Nullable String url;
@@ -604,17 +624,35 @@ public class Messages {
         return this;
       }
 
+      private @Nullable Long height;
+
+      public @NonNull Builder setHeight(@Nullable Long setterArg) {
+        this.height = setterArg;
+        return this;
+      }
+
+      private @Nullable Long width;
+
+      public @NonNull Builder setWidth(@Nullable Long setterArg) {
+        this.width = setterArg;
+        return this;
+      }
+
       public @NonNull DownloadUrlMessage build() {
         DownloadUrlMessage pigeonReturn = new DownloadUrlMessage();
         pigeonReturn.setUrl(url);
+        pigeonReturn.setHeight(height);
+        pigeonReturn.setWidth(width);
         return pigeonReturn;
       }
     }
 
     @NonNull
     ArrayList<Object> toList() {
-      ArrayList<Object> toListResult = new ArrayList<Object>(1);
+      ArrayList<Object> toListResult = new ArrayList<Object>(3);
       toListResult.add(url);
+      toListResult.add(height);
+      toListResult.add(width);
       return toListResult;
     }
 
@@ -622,6 +660,10 @@ public class Messages {
       DownloadUrlMessage pigeonResult = new DownloadUrlMessage();
       Object url = list.get(0);
       pigeonResult.setUrl((String) url);
+      Object height = list.get(1);
+      pigeonResult.setHeight((height == null) ? null : ((height instanceof Integer) ? (Integer) height : (Long) height));
+      Object width = list.get(2);
+      pigeonResult.setWidth((width == null) ? null : ((width instanceof Integer) ? (Integer) width : (Long) width));
       return pigeonResult;
     }
   }

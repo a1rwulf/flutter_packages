@@ -113,24 +113,20 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
 
   @override
   Future<Duration> getPosition(int textureId) async {
-    final PositionMessage response =
-        await _api.position(TextureMessage(textureId: textureId));
+    final PositionMessage response = await _api.position(TextureMessage(textureId: textureId));
     return Duration(milliseconds: response.position);
   }
 
   @override
   Stream<VideoEvent> videoEventsFor(int textureId) {
-    return _eventChannelFor(textureId)
-        .receiveBroadcastStream()
-        .map((dynamic event) {
+    return _eventChannelFor(textureId).receiveBroadcastStream().map((dynamic event) {
       final Map<dynamic, dynamic> map = event as Map<dynamic, dynamic>;
       switch (map['event']) {
         case 'initialized':
           return VideoEvent(
             eventType: VideoEventType.initialized,
             duration: Duration(milliseconds: map['duration'] as int),
-            size: Size((map['width'] as num?)?.toDouble() ?? 0.0,
-                (map['height'] as num?)?.toDouble() ?? 0.0),
+            size: Size((map['width'] as num?)?.toDouble() ?? 0.0, (map['height'] as num?)?.toDouble() ?? 0.0),
             rotationCorrection: map['rotationCorrection'] as int? ?? 0,
           );
         case 'completed':
@@ -166,13 +162,12 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
 
   @override
   Future<void> setMixWithOthers(bool mixWithOthers) {
-    return _api
-        .setMixWithOthers(MixWithOthersMessage(mixWithOthers: mixWithOthers));
+    return _api.setMixWithOthers(MixWithOthersMessage(mixWithOthers: mixWithOthers));
   }
 
   @override
-  Future<void> startDownload(String url) {
-    return _api.startDownload(DownloadUrlMessage(url: url));
+  Future<void> startDownload(String url, int width, int height) {
+    return _api.startDownload(DownloadUrlMessage(url: url, height: height, width: width));
   }
 
   @override
@@ -187,8 +182,7 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
 
   @override
   Future<Download?> getDownload(String url) async {
-    final DownloadMessage downloadMessage =
-        await _api.getDownload(DownloadUrlMessage(url: url));
+    final DownloadMessage downloadMessage = await _api.getDownload(DownloadUrlMessage(url: url));
     if (downloadMessage.url == null) {
       return Future<Download?>.value();
     } else {
@@ -208,9 +202,7 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
 
   @override
   Stream<Download> downloadEvents() {
-    return _downloadEventChannel()
-        .receiveBroadcastStream()
-        .map((dynamic event) {
+    return _downloadEventChannel().receiveBroadcastStream().map((dynamic event) {
       final Map<dynamic, dynamic> map = event as Map<dynamic, dynamic>;
       switch (map['event']) {
         case 'progress':
@@ -220,8 +212,7 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
               bytesDownloaded: 0,
               percentDownloaded: (map['percent'] as num?)?.toDouble() ?? 0.0);
         default:
-          return const Download(
-              url: '', state: 0, bytesDownloaded: 0, percentDownloaded: 0.0);
+          return const Download(url: '', state: 0, bytesDownloaded: 0, percentDownloaded: 0.0);
       }
     });
   }
@@ -234,8 +225,7 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
     return const EventChannel('flutter.io/videoPlayer/downloadEvents');
   }
 
-  static const Map<VideoFormat, String> _videoFormatStringMap =
-      <VideoFormat, String>{
+  static const Map<VideoFormat, String> _videoFormatStringMap = <VideoFormat, String>{
     VideoFormat.ss: 'ss',
     VideoFormat.hls: 'hls',
     VideoFormat.dash: 'dash',

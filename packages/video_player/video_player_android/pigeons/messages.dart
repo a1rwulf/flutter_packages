@@ -57,13 +57,14 @@ class MixWithOthersMessage {
 }
 
 class DownloadUrlMessage {
-  DownloadUrlMessage(this.url);
+  DownloadUrlMessage(this.url, this.height, this.width);
   String? url;
+  int? height;
+  int? width;
 }
 
 class DownloadMessage {
-  DownloadMessage(
-      this.url, this.state, this.percentDownloaded, this.bytesDownloaded);
+  DownloadMessage(this.url, this.state, this.percentDownloaded, this.bytesDownloaded);
   final String? url;
   final int? state;
   final double? percentDownloaded;
