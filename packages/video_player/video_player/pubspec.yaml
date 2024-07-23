@@ -3,7 +3,7 @@ description: Flutter plugin for displaying inline video with other Flutter
   widgets on Android, iOS, and web.
 repository: https://github.com/flutter/packages/tree/main/packages/video_player/video_player
 issue_tracker: https://github.com/flutter/flutter/issues?q=is%3Aissue+is%3Aopen+label%3A%22p%3A+video_player%22
-version: 2.8.0
+version: 2.9.0
 publish_to: https://dart.cloudsmith.io/seadev-studios-gmbh/seadev/
 
 environment:
@@ -25,17 +25,17 @@ dependencies:
     sdk: flutter
   html: ^0.15.0
   video_player_android:
-    version: ^2.5.0
+    version: ^2.6.0
     hosted:
       name: video_player_android
       url: https://dart.cloudsmith.io/seadev-studios-gmbh/seadev/
   video_player_avfoundation:
-    version: ^2.5.0
+    version: ^2.6.0
     hosted:
       name: video_player_avfoundation
       url: https://dart.cloudsmith.io/seadev-studios-gmbh/seadev/
   video_player_platform_interface:
-    version: ">=6.3.0 <7.0.0"
+    version: ">=6.4.0 <7.0.0"
     hosted:
       name: video_player_platform_interface
       url: https://dart.cloudsmith.io/seadev-studios-gmbh/seadev/

@@ -1,3 +1,6 @@
+## 6.4.0
+* Add support for custom download quality.
+
 ## 6.3.0
 
 * Updates minimum supported SDK version to Flutter 3.7/Dart 2.19.
