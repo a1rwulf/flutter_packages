@@ -1,3 +1,7 @@
+## 2.7.0
+
+* Fix issue with flutter 3.32.x
+
 ## 2.6.0
 
 * Add support for custom download quality.
