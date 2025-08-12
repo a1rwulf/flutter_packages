@@ -37,7 +37,7 @@ public class VideoPlayerDownloadService extends DownloadService {
         FOREGROUND_NOTIFICATION_ID,
         DEFAULT_FOREGROUND_NOTIFICATION_UPDATE_INTERVAL,
         DOWNLOAD_NOTIFICATION_CHANNEL_ID,
-        R.string.exo_download_notification_channel_name,
+        0,
         /* channelDescriptionResourceId= */ 0);
   }
 
