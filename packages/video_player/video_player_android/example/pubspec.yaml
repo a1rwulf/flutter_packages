@@ -20,7 +20,7 @@ dependencies:
     version: ">=6.3.0 <7.0.0"
     hosted:
       name: video_player_platform_interface
-      url: https://dart.cloudsmith.io/seadev-studios-gmbh/seadev/
+      url: https://pub.seadev.tools
 
 dev_dependencies:
   flutter_test:
